@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>무너진 연합의 파편들 — 문서보관소</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --ink:#14171c;
+  --ink-2:#1c2027;
+  --paper:#f1ecdd;
+  --paper-dim:#e6dfc9;
+  --text:#211c14;
+  --text-muted:#7a7260;
+  --stamp:#8c2f2f;
+  --brass:#a98a4e;
+  --line:#c9bf9c;
+  --line-dark:#33383f;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--ink);color:var(--paper);font-family:'Noto Serif KR',serif;}
+body{display:flex;min-height:100vh;}
+
+textarea,input{font-family:'Noto Serif KR',serif;}
+
+/* ---------- Sidebar ---------- */
+#sidebar{width:340px;min-width:340px;background:var(--ink-2);border-right:1px solid var(--line-dark);overflow-y:auto;height:100vh;position:sticky;top:0;}
+#sidebar-head{padding:26px 22px 16px;border-bottom:1px solid var(--line-dark);}
+#sidebar-head .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--brass);text-transform:uppercase;}
+#sidebar-head h1{font-size:21px;font-weight:700;margin-top:6px;line-height:1.35;color:var(--paper);}
+#sidebar-head .sub{margin-top:8px;font-size:12px;color:#8b93a3;font-family:'Space Mono',monospace;display:flex;justify-content:space-between;align-items:center;}
+#save-indicator{font-size:10px;color:var(--brass);opacity:0;transition:opacity .3s;}
+#save-indicator.show{opacity:1;}
+
+.book-toggle{display:flex;border-bottom:1px solid var(--line-dark);}
+.book-toggle button{flex:1;background:none;border:none;color:#8b93a3;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.06em;padding:12px 6px;cursor:pointer;border-bottom:2px solid transparent;}
+.book-toggle button.active{color:var(--brass);border-bottom:2px solid var(--brass);}
+
+#toc{padding:10px 0 10px;}
+
+.part{border-bottom:1px solid rgba(201,191,156,0.08);}
+.part-head{display:flex;align-items:center;gap:8px;padding:12px 14px 12px 22px;cursor:pointer;user-select:none;}
+.part-head:hover{background:rgba(169,138,78,0.08);}
+.part-id{font-family:'Space Mono',monospace;font-size:11px;color:var(--brass);min-width:34px;flex-shrink:0;}
+.part-title{font-size:14px;color:#d8dbe2;flex:1;line-height:1.4;}
+.part-title-input{background:var(--ink);border:1px solid var(--brass);color:var(--paper);font-size:13px;padding:4px 6px;border-radius:2px;width:100%;}
+.part-count{font-family:'Space Mono',monospace;font-size:10px;color:#5b6270;flex-shrink:0;}
+.icon-btn{background:none;border:none;color:#5b6270;cursor:pointer;font-size:12px;padding:3px 5px;flex-shrink:0;border-radius:2px;}
+.icon-btn:hover{color:var(--brass);background:rgba(169,138,78,0.12);}
+.icon-btn.danger:hover{color:var(--stamp);background:rgba(140,47,47,0.15);}
+.part-arrow{font-family:'Space Mono',monospace;font-size:10px;color:#5b6270;transition:transform .15s ease;flex-shrink:0;}
+.part.open .part-arrow{transform:rotate(90deg);}
+
+.chapter-list{display:none;padding:0 0 6px;}
+.part.open .chapter-list{display:block;}
+
+.chapter-row{display:flex;align-items:center;gap:6px;padding:7px 14px 7px 46px;}
+.chapter-row:hover{background:rgba(255,255,255,0.03);}
+.chapter-row.active{background:rgba(140,47,47,0.15);}
+.chapter-item{display:flex;align-items:center;gap:9px;cursor:pointer;flex:1;min-width:0;border-left:2px solid transparent;padding-left:8px;margin-left:-8px;}
+.chapter-row.active .chapter-item{border-left:2px solid var(--stamp);}
+.seal{width:8px;height:8px;border-radius:50%;border:1px solid #5b6270;flex-shrink:0;}
+.seal.written{background:var(--brass);border-color:var(--brass);}
+.chapter-item .ct-title{font-size:13px;color:#c3c7ce;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chapter-row.active .ct-title{color:var(--paper);}
+.chapter-actions{display:none;gap:2px;flex-shrink:0;}
+.chapter-row:hover .chapter-actions{display:flex;}
+.chapter-edit-form{display:flex;flex-direction:column;gap:5px;padding:7px 14px 9px 46px;}
+.chapter-edit-form input{background:var(--ink);border:1px solid var(--brass);color:var(--paper);font-size:12.5px;padding:5px 7px;border-radius:2px;}
+.chapter-edit-form .row{display:flex;gap:6px;}
+.chapter-edit-form .row button{font-family:'Space Mono',monospace;font-size:10.5px;padding:5px 10px;border-radius:2px;border:1px solid var(--line-dark);background:none;color:#8b93a3;cursor:pointer;}
+.chapter-edit-form .row button.primary{border-color:var(--brass);color:var(--brass);}
+
+.add-chapter-btn{margin:4px 14px 8px 46px;font-family:'Space Mono',monospace;font-size:11.5px;color:#5b6270;background:none;border:1px dashed var(--line-dark);padding:7px 10px;border-radius:2px;cursor:pointer;width:calc(100% - 60px);text-align:left;}
+.add-chapter-btn:hover{color:var(--brass);border-color:var(--brass);}
+
+#add-part-wrap{padding:14px 22px 30px;}
+#add-part-btn{font-family:'Space Mono',monospace;font-size:11.5px;color:#5b6270;background:none;border:1px dashed var(--line-dark);padding:9px 12px;border-radius:2px;cursor:pointer;width:100%;text-align:left;}
+#add-part-btn:hover{color:var(--brass);border-color:var(--brass);}
+#add-part-form{display:none;flex-direction:column;gap:6px;}
+#add-part-form.open{display:flex;}
+#add-part-form input,#add-part-form select{background:var(--ink);border:1px solid var(--brass);color:var(--paper);font-size:12.5px;padding:6px 8px;border-radius:2px;}
+#add-part-form .row{display:flex;gap:6px;}
+#add-part-form .row button{font-family:'Space Mono',monospace;font-size:10.5px;padding:6px 10px;border-radius:2px;border:1px solid var(--line-dark);background:none;color:#8b93a3;cursor:pointer;}
+#add-part-form .row button.primary{border-color:var(--brass);color:var(--brass);}
+
+/* ---------- Main ---------- */
+#main{flex:1;height:100vh;overflow-y:auto;background:var(--ink);display:flex;justify-content:center;padding:48px 24px 120px;}
+#doc{width:100%;max-width:680px;}
+
+.welcome{padding-top:80px;text-align:center;color:#5b6270;}
+.welcome .mark{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--brass);margin-bottom:18px;}
+.welcome h2{font-size:26px;color:#d8dbe2;margin-bottom:14px;}
+.welcome p{font-size:14px;line-height:1.8;color:#8b93a3;max-width:440px;margin:0 auto;}
+
+.doc-card{background:var(--paper);color:var(--text);border-radius:2px;box-shadow:0 24px 60px rgba(0,0,0,0.45);overflow:hidden;}
+.doc-header{padding:34px 44px 22px;border-bottom:1px solid var(--line);position:relative;}
+.doc-eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--text-muted);}
+.doc-title{font-size:27px;font-weight:700;margin-top:10px;line-height:1.4;}
+.doc-title-input{font-size:22px;font-weight:700;margin-top:10px;width:80%;border:1px solid var(--line);background:#fff;padding:6px 8px;border-radius:2px;font-family:'Noto Serif KR',serif;}
+.doc-date{margin-top:10px;font-family:'Space Mono',monospace;font-size:12px;color:var(--text-muted);}
+.doc-date-input{margin-top:10px;font-family:'Space Mono',monospace;font-size:12px;border:1px solid var(--line);background:#fff;padding:5px 7px;border-radius:2px;width:60%;}
+
+.stamp-badge{position:absolute;top:34px;right:44px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;padding:5px 10px;border:1.5px solid var(--stamp);color:var(--stamp);border-radius:2px;transform:rotate(3deg);white-space:nowrap;}
+.stamp-badge.written{border-color:var(--brass);color:#7a5f24;}
+
+.doc-body{padding:34px 44px 46px;font-size:16.5px;line-height:2;white-space:pre-wrap;}
+.doc-body p{margin-bottom:1.3em;}
+.doc-body-editor{width:100%;min-height:400px;font-size:15.5px;line-height:1.9;padding:16px;border:1px solid var(--line);border-radius:2px;resize:vertical;background:#fff;color:var(--text);}
+
+.redacted{padding:6px 0 4px;}
+.redacted-bar{height:15px;background:repeating-linear-gradient(90deg,var(--text) 0px,var(--text) 2px,transparent 2px,transparent 4px);opacity:0.12;border-radius:1px;margin-bottom:12px;}
+.redacted-bar:nth-child(1){width:92%;}
+.redacted-bar:nth-child(2){width:78%;}
+.redacted-bar:nth-child(3){width:85%;}
+.redacted-bar:nth-child(4){width:60%;}
+.redacted-note{margin-top:26px;font-family:'Space Mono',monospace;font-size:12px;color:var(--text-muted);border-top:1px dashed var(--line);padding-top:18px;line-height:1.9;}
+
+.doc-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 44px;background:var(--paper-dim);border-top:1px solid var(--line);flex-wrap:wrap;}
+.doc-nav-side{display:flex;gap:8px;}
+.doc-nav button{background:none;border:1px solid var(--line);color:var(--text);font-family:'Space Mono',monospace;font-size:11.5px;padding:9px 14px;border-radius:2px;cursor:pointer;}
+.doc-nav button:hover{border-color:var(--stamp);color:var(--stamp);}
+.doc-nav button:disabled{opacity:.3;cursor:default;}
+.doc-nav button:disabled:hover{border-color:var(--line);color:var(--text);}
+.doc-nav button.primary{border-color:var(--brass);color:#7a5f24;}
+.doc-nav button.save{border-color:var(--stamp);color:var(--stamp);}
+
+@media (max-width: 860px){
+  body{flex-direction:column;}
+  #sidebar{width:100%;min-width:0;height:auto;position:relative;max-height:50vh;}
+  #main{height:auto;padding:28px 14px 90px;}
+  .doc-header{padding:26px 20px 18px;}
+  .doc-body{padding:24px 20px 36px;font-size:15.5px;}
+  .doc-nav{padding:14px 20px;}
+  .stamp-badge{right:20px;top:24px;}
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-head">
+    <div class="eyebrow">황정(黃政) 세계관 · 문서보관소</div>
+    <h1>무너진 연합의 파편들</h1>
+    <div class="sub"><span id="progress-label">0 / 0 화 수록</span><span id="save-indicator">저장됨</span></div>
+  </div>
+  <div class="book-toggle">
+    <button class="active" data-book="1">권1 · 챕터 1–10</button>
+    <button data-book="2">권2 · 챕터 11–</button>
+  </div>
+  <div id="toc"></div>
+  <div style="padding:0 22px 4px;display:flex;gap:8px;">
+    <button id="exportBtn" style="flex:1;font-family:'Space Mono',monospace;font-size:10.5px;color:#5b6270;background:none;border:1px solid var(--line-dark);padding:8px 6px;border-radius:2px;cursor:pointer;">⬇ 백업 저장</button>
+    <label style="flex:1;font-family:'Space Mono',monospace;font-size:10.5px;color:#5b6270;background:none;border:1px solid var(--line-dark);padding:8px 6px;border-radius:2px;cursor:pointer;text-align:center;">
+      ⬆ 백업 불러오기
+      <input type="file" id="importInput" accept="application/json" style="display:none;">
+    </label>
+  </div>
+  <div id="add-part-wrap">
+    <button id="add-part-btn">+ 파트 추가</button>
+    <div id="add-part-form">
+      <input type="text" id="new-part-id" placeholder="번호 (예: 11-2)">
+      <input type="text" id="new-part-title" placeholder="파트 제목">
+      <select id="new-part-book"><option value="1">권1</option><option value="2">권2</option></select>
+      <div class="row">
+        <button class="primary" id="confirm-add-part">추가</button>
+        <button id="cancel-add-part">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="doc"></div>
+</div>
+
+<script>
+const DEFAULT_DATA = [
+{book:1, id:'1', title:'전정: 모든 내용의 시작', chapters:[
+  {t:'프롤로그: 모든 내용의 시작'}, {t:'대혼란'}, {t:'연합'}
+]},
+{book:1, id:'2', title:'구정: 정치의 간섭', chapters:[
+  {t:'첫 선거'}, {t:'지하철계획'}, {t:'방향전환'}
+]},
+{book:1, id:'3', title:'중정: 독재의 시작', chapters:[
+  {t:'중정: 독재의 시작'}
+]},
+{book:1, id:'4', title:'오방정색정부: 새로운 시작', chapters:[
+  {t:'새로운 시작'}, {t:'독재자의 항복'}, {t:'보수의 희망'}, {t:'분열'}, {t:'연합'},
+  {t:'3특검'}, {t:'정당해산'}, {t:'무차별 살인미수사건'}, {t:'광산의 조작'},
+  {t:'망명'}, {t:'대거짓사건'}, {t:'저물어가는 해'}
+]},
+{book:1, id:'4-1', title:'제1차 세계대전: 시작은 굵고, 끝은 짧게', chapters:[
+  {t:'제1차 세계대전: 시작은 굵고, 끝은 짧게'}
+]},
+{book:1, id:'5', title:'중정: 다시 독재로', chapters:[
+  {t:'다시 독재로'}, {t:'자유를 향한 외침'}, {t:'독재자의 제안'}
+]},
+{book:1, id:'6', title:'황정연합: 연합의힘', chapters:[
+  {t:'황정연합: 연합의힘'}
+]},
+{book:1, id:'7', title:'여러나라: 혼돈의 시작', chapters:[
+  {t:'혼돈의 시작', d:'4518년 9월 11일'}
+]},
+{book:1, id:'7-1', title:'신냉전 시대', chapters:[
+  {t:'자유의 힘으로', d:'4518년 10월 10일'},
+  {t:'국공내전: 누가 승리인가', d:'4518년 10월 11일 ~ 4521년 9월 19일'},
+  {t:'재신임', d:'4521년 9월 19일'},
+  {t:'시장의 연설', d:'4521년 9월 24일 ~ 9월 30일'},
+  {t:'경찰청장의 계략', d:'4521년 10월 1일 ~ 10월 4일'},
+  {t:'후퇴하는 연합', d:'4521년 10월 5일 ~ 4523년 3월 11일'},
+  {t:'대분열', d:'4523년 7월 6일'},
+  {t:'가까스로', d:'4523년 8월 11일'},
+  {t:'협상', d:'4523년 8월 12일 ~ 20일'},
+  {t:'자유회의 생각', d:'4523년 8월 23일'},
+  {t:'연립의 붕괴', d:'4523년 8월 24일'},
+  {t:'두 거물의 갈등', d:'4523년 8월 25일'},
+  {t:'內末外始(내말외시)', d:'예정'}
+]},
+{book:1, id:'7-2', title:'박성천 탄핵기', chapters:[
+  {t:'국무회의의 파문', d:'4523년 8월 26일'},
+  {t:'세번의 탄핵소추', d:'4523년 8월 26일'},
+  {t:'전진당의 복수', d:'4523년 8월 26일'},
+  {t:'한작가의 방해', d:'4523년 8월 26일, 29일'},
+  {t:'국회에서의 입씨름', d:'4523년 8월 26일'},
+  {t:'국회 밖의 설득전', d:'4523년 8월 26일 ~ 27일'},
+  {t:'침묵의 답변', d:'4523년 8월 28일'},
+  {t:'호랑이의 충고', d:'4523년 8월 29일'},
+  {t:'보충과 변경', d:'4523년 8월 30일'},
+  {t:'위험한 진실', d:'4523년 8월 31일'},
+  {t:'마지막 선택', d:'4523년 9월 1일'},
+  {t:'불신임', d:'4523년 9월 2일'}
+]},
+{book:1, id:'7-3', title:'조기대선 국면', chapters:[
+  {t:'권한대행 남기훈', d:'4523년 9월 3일'},
+  {t:'국경의 그림자', d:'4523년 9월 4일'},
+  {t:'드러나는 진실', d:'4523년 9월 5일 ~ 6일'},
+  {t:'허락받지 않은 출마', d:'4523년 9월 7일'},
+  {t:'그가 온 이유', d:'~ 4523년 9월 7일'}
+]},
+{book:1, id:'7-4', title:'계엄기', chapters:[
+  {t:'No Available', d:'4523년 12월 3일'},
+  {t:'긴급사태', d:'4523년 12월 4일'},
+  {t:'중단된 선거', d:'4523년 12월 5일 ~ 6일'},
+  {t:'엇갈린 종점', d:'4523년 12월 7일'},
+  {t:'선관위원장의 선택'},
+  {t:'선관위원장의 회고'}
+]},
+{book:1, id:'8-1', title:'특허권 쟁탈기', chapters:[
+  {t:'공화당, 누구의 것인가', d:'4523년 10월 10일'},
+  {t:'두번의 재판', d:'4523년 10월 11일 ~ 11월 24일'},
+  {t:'재판 관할: 국경 밖으로', d:'4523년 11월 25일 ~ 12월 12일'},
+  {t:'뇌물 수수', d:'4523년 12월 5일 ~ 10일'},
+  {t:'국경 너머의 심판', d:'4523년 12월 13일'},
+  {t:'결판', d:'4524년 1월 9일'}
+]},
+{book:1, id:'8-2', title:'황정연합 해산기', chapters:[
+  {t:'미국의 카드', d:'4524년 1월 10일'},
+  {t:'분리, 다시 합일', d:'4524년 1월 10일 ~ 3월 7일'},
+  {t:'어이없는 해산', d:'4524년 3월 9일'},
+  {t:'세계로 이어진 해산', d:'4524년 3월 10일'},
+  {t:'독재의 재시작', d:'4524년 3월 10일 A'},
+  {t:'독재의 어려움', d:'4524년 3월 10일 A ~ 3월 27일 A'}
+]},
+{book:1, id:'8-3', title:'미래 고치기', chapters:[
+  {t:'감독의 도움', d:'4524년 3월 27일 A'},
+  {t:'첫번째 회귀', d:'4524년 3월 10일 B'},
+  {t:'두번째 회귀', d:'4524년 3월 10일 C'},
+  {t:'세번째 회귀', d:'4524년 3월 10일 D'},
+  {t:'마지막 회귀', d:'4524년 3월 10일 E'},
+  {t:'독재자의 억울함', d:'4524년 3월 11일'},
+  {t:'또다시 재판', d:'4524년 3월 11일'}
+]},
+{book:1, id:'8-4', title:'일본에서의 대결', chapters:[
+  {t:'다시 잡은 쿠죠', d:'4523년 10월 13일'},
+  {t:'정권의 위험성', d:'4523년 10월 14일'},
+  {t:'세이토의 명령', d:'4523년 10월 16일'},
+  {t:'대신 탄핵', d:'4523년 11월 13일'},
+  {t:'재임명', d:'4523년 12월 19일'},
+  {t:'디지털에서 아날로그로', d:'4523년 12월 20일'},
+  {t:'거짓으로 생존', d:'4523년 12월 26일 ~ 4524년 1월 6일'},
+  {t:'다시 선거', d:'4524년 1월 7일'},
+  {t:'세토의 승', d:'4524년 2월 8일'}
+]},
+{book:1, id:'8-5', title:'세기의 대결', chapters:[
+  {t:'세이토 vs 세토', d:'4524년 2월 9일'},
+  {t:'야마모토 vs 세토', d:'4524년 3월 10일'},
+  {t:'지구는 과연 어떠한가?', d:'4524년 3월 11일'},
+  {t:'돌아온 세이토', d:'4524년 3월 11일'}
+]},
+{book:1, id:'9-1', title:'계엄 종료기', chapters:[
+  {t:'화성에서', d:'4524년 12월 7일 ~ 4524년 2월 5일'},
+  {t:'마지막 간첩', d:'4524년 2월 6일'},
+  {t:'계엄 종료', d:'4524년 2월 8일'},
+  {t:'나라 정비', d:'4524년 2월 8일 ~ 3월 9일'},
+  {t:'통계내기', d:'4524년 3월 14일'},
+  {t:'선관위의 실수', d:'4524년 3월 20일'},
+  {t:'돌아온 박성현', d:'4524년 3월 25일'}
+]},
+{book:1, id:'9-2', title:'대선 국면', chapters:[
+  {t:'다시 박성천 사면', d:'4524년 3월 26일'},
+  {t:'대통령의 보고서, 무엇인가?', d:'4524년 3월 27일'},
+  {t:'새로운 보수의 등장', d:'4524년 4월 1일'},
+  {t:'포스터 교체', d:'4524년 4월 2일 ~ 4일'}
+]},
+{book:1, id:'9-3', title:'고진수 등장', chapters:[
+  {t:'고진수의 등장', d:'4524년 4월 6일'},
+  {t:'한이월의 등장', d:'4524년 4월 6일'},
+  {t:'태풍의 눈', d:'4524년 4월 7일'},
+  {t:'거리에 깔린 현수막', d:'4524년 4월 8일 ~ 11일'},
+  {t:'이상한 대선', d:'4524년 4월 12일 ~ 14일'},
+  {t:'최강민의 시비', d:'4524년 4월 15일 ~ 22일'},
+  {t:'공개토론', d:'4524년 4월 23일'},
+  {t:'역전: 율산(律山)효과', d:'4524년 4월 24일'},
+  {t:'마지막 발언', d:'4524년 4월 25일'}
+]},
+{book:1, id:'9-4', title:'고진수 실종', chapters:[
+  {t:'사라진 고진수', d:'4524년 4월 26일 9:00 ~ 14:37'},
+  {t:'뒤섞인 진실', d:'4524년 4월 26일 14:38 ~ 17:00'},
+  {t:'변화하는 흐름', d:'4524년 4월 26일 17:00 ~ 17:59'},
+  {t:'정보기관의 싸움', d:'4524년 4월 26일 18:00 ~ 19:00'},
+  {t:'각각의 반응', d:'4524년 4월 26일 19:40 ~ 24:00'},
+  {t:'선관위원장의 고뇌', d:'4524년 4월 26일'},
+  {t:'박성현의 제시', d:'4524년 4월 27일 09:00 ~ 10:53'},
+  {t:'TF의 난항', d:'4524년 4월 27일 10:54 ~ 11:59'}
+]},
+{book:1, id:'9-5', title:'드러나는 조직', chapters:[
+  {t:'본격적인 수사', d:'4524년 4월 27일 12:00 ~ 14:00'},
+  {t:'의외의 결론', d:'4524년 4월 27일 14:01 ~ 15:30'},
+  {t:'우연한 중복', d:'4524년 4월 27일 15:31 ~ 16:45'},
+  {t:'선관위원장의 관찰', d:'4524년 4월 27일 12:00 ~ 14:00'},
+  {t:'선관위원장의 경악', d:'4524년 4월 27일 14:01 ~ 15:30'},
+  {t:'드러나는 조직'}, {t:'TF팀의 경악'}, {t:'남겨진 흔적'},
+  {t:'남겨진 자들의 최후'}, {t:'고진수의 선택'}, {t:'선관위원장의 결정'}
+]},
+{book:1, id:'9-6', title:'진실 vs 비유', chapters:[
+  {t:'모인 기득권'}, {t:'토론시작'}, {t:'윤회는 존재하는가?'}, {t:'적의 적은 우리편!'},
+  {t:'뭐만하면 다 비유!'}, {t:'TF팀의 모순'}, {t:'독사의 자식들아!'},
+  {t:'타락한 성전 밖의 성자'}, {t:'이단이 된 대답'}, {t:'하느님 vs 하나님'},
+  {t:'비유의 감옥'}, {t:'선택으로 갈린 종점'}, {t:'조직의 방해'}, {t:'확신'},
+  {t:'또 다시 논쟁'}, {t:'작가의 말'}
+]},
+{book:1, id:'10-1', title:'황정의 부활', chapters:[
+  {t:'황정의 부활'}
+]},
+{book:1, id:'10-2', title:'명존실망(名存實亡)의 황정', chapters:[
+  {t:'명존실망(名存實亡)의 황정'}
+]},
+{book:1, id:'10-3', title:'무너진 황정', chapters:[
+  {t:'무너진 나라'}, {t:'계획된 분열'}, {t:'동상이몽(同床異夢)'}, {t:'도피와 잔류'}
+]},
+{book:1, id:'10-?', title:'강시 페스티벌', chapters:[
+  {t:'서곡'}, {t:'행진'}, {t:'전주'}, {t:'불협화음'}, {t:'크레셴도'}, {t:'변주'},
+  {t:'재현'}, {t:'포르티시모'}, {t:'제1악장'}, {t:'제2악장'}, {t:'제3악장'},
+  {t:'종결부'}, {t:'피날레'}
+]},
+{book:2, id:'11', title:'부록: 메타 인터뷰 (2권 브리지)', chapters:[
+  {t:'S#1', d:'BBC 뉴스룸'}, {t:'S#2'}, {t:'S#3'}, {t:'S#4'}, {t:'S#5'}, {t:'S#6'}, {t:'S#7'}
+]}
+];
+
+const STORAGE_KEY = 'archive-data-v1';
+let DATA = null;
+let currentBook = 1;
+let flat = [];
+let editingChapter = null; // {partId, cIdx}
+
+function escapeHTML(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      DATA = JSON.parse(raw);
+      return;
+    }
+  }catch(e){ /* fall through */ }
+  DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  await saveData();
+}
+
+async function saveData(){
+  const ind = document.getElementById('save-indicator');
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+    if(ind){
+      ind.textContent = '저장됨';
+      ind.classList.add('show');
+      setTimeout(()=>ind.classList.remove('show'), 1200);
+    }
+  }catch(e){
+    if(ind){ ind.textContent = '저장 실패'; ind.classList.add('show'); }
+    console.error('save failed', e);
+  }
+}
+
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '황정_아카이브_백업.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(Array.isArray(parsed)){
+        DATA = parsed;
+        await saveData();
+        renderTOC();
+        openState = null;
+        renderWelcome();
+      }
+    }catch(err){ console.error('import failed', err); }
+  };
+  reader.readAsText(file);
+}
+
+function buildFlat(book){
+  flat = [];
+  DATA.filter(p=>p.book===book).forEach(part=>{
+    part.chapters.forEach((c,ci)=>{
+      flat.push({partId:part.id, ci});
+    });
+  });
+}
+
+function findPart(partId){
+  return DATA.find(p=>p.id===partId && p.book===currentBook);
+}
+
+// ---------- TOC render ----------
+function renderTOC(openPartIds){
+  openPartIds = openPartIds || [];
+  const toc = document.getElementById('toc');
+  toc.innerHTML = '';
+  const parts = DATA.filter(p=>p.book===currentBook);
+  let total=0, written=0;
+
+  parts.forEach(part=>{
+    const partEl = document.createElement('div');
+    partEl.className = 'part' + (openPartIds.includes(part.id) ? ' open' : '');
+
+    const head = document.createElement('div');
+    head.className = 'part-head';
+    head.innerHTML = `
+      <span class="part-id">${escapeHTML(part.id)}</span>
+      <span class="part-title" data-role="title">${escapeHTML(part.title)}</span>
+      <span class="part-count">${part.chapters.length}</span>
+      <button class="icon-btn" data-act="rename-part" title="이름 수정">✎</button>
+      <button class="icon-btn danger" data-act="delete-part" title="파트 삭제">×</button>
+      <span class="part-arrow">▶</span>
+    `;
+    head.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-act]')) return;
+      partEl.classList.toggle('open');
+    });
+    head.querySelector('[data-act="rename-part"]').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      startRenamePart(head, part);
+    });
+    const delBtn = head.querySelector('[data-act="delete-part"]');
+    delBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(delBtn.dataset.armed === '1'){
+        deletePart(part.id);
+      } else {
+        delBtn.dataset.armed = '1';
+        delBtn.textContent = '확실?';
+        setTimeout(()=>{ delBtn.dataset.armed=''; delBtn.textContent='×'; }, 2500);
+      }
+    });
+
+    const list = document.createElement('div');
+    list.className = 'chapter-list';
+    part.chapters.forEach((c, cIdx)=>{
+      total++;
+      if(c.written) written++;
+      list.appendChild(renderChapterRow(part, cIdx));
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-chapter-btn';
+    addBtn.textContent = '+ 화 추가';
+    addBtn.addEventListener('click', ()=>{
+      part.chapters.push({t:'새 화', _editing:true});
+      renderTOC(currentOpenParts().concat(part.id));
+      const forms = document.querySelectorAll(`.chapter-edit-form[data-part-id="${CSS.escape(part.id)}"]`);
+      const lastForm = forms[forms.length-1];
+      if(lastForm){ lastForm.querySelector('input').focus(); lastForm.querySelector('input').select(); }
+    });
+
+    list.appendChild(addBtn);
+    partEl.appendChild(head);
+    partEl.appendChild(list);
+    toc.appendChild(partEl);
+  });
+
+  document.getElementById('progress-label').textContent = `${written} / ${total} 화 수록`;
+}
+
+function currentOpenParts(){
+  return Array.from(document.querySelectorAll('.part.open')).map(el=>{
+    const idEl = el.querySelector('.part-id');
+    return idEl ? idEl.textContent : null;
+  }).filter(Boolean);
+}
+
+function startRenamePart(headEl, part){
+  const titleSpan = headEl.querySelector('[data-role="title"]');
+  const input = document.createElement('input');
+  input.className = 'part-title-input';
+  input.value = part.title;
+  titleSpan.replaceWith(input);
+  input.focus();
+  input.select();
+  function commit(){
+    part.title = input.value.trim() || part.title;
+    saveData();
+    renderTOC(currentOpenParts());
+  }
+  input.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ commit(); }
+    if(e.key==='Escape'){ renderTOC(currentOpenParts()); }
+  });
+  input.addEventListener('blur', commit);
+}
+
+function deletePart(partId){
+  const idx = DATA.findIndex(p=>p.id===partId && p.book===currentBook);
+  if(idx>-1){
+    DATA.splice(idx,1);
+    saveData();
+    renderTOC(currentOpenParts());
+    renderWelcome();
+  }
+}
+
+function renderChapterRow(part, cIdx){
+  const c = part.chapters[cIdx];
+  if(c._editing){
+    const wrap = document.createElement('div');
+    wrap.className = 'chapter-edit-form';
+    wrap.dataset.partId = part.id;
+    wrap.innerHTML = `
+      <input type="text" data-f="t" placeholder="화 제목" value="${escapeHTML(c.t||'')}">
+      <input type="text" data-f="d" placeholder="날짜/시점 (선택)" value="${escapeHTML(c.d||'')}">
+      <div class="row">
+        <button class="primary" data-act="save">저장</button>
+        <button data-act="cancel">취소</button>
+      </div>
+    `;
+    wrap.querySelector('[data-act="save"]').addEventListener('click', ()=>{
+      const t = wrap.querySelector('[data-f="t"]').value.trim();
+      const d = wrap.querySelector('[data-f="d"]').value.trim();
+      c.t = t || '제목 없음';
+      if(d) c.d = d; else delete c.d;
+      delete c._editing;
+      saveData();
+      renderTOC(currentOpenParts().concat(part.id));
+    });
+    wrap.querySelector('[data-act="cancel"]').addEventListener('click', ()=>{
+      if(!c.t || c.t==='새 화'){ part.chapters.splice(cIdx,1); }
+      else { delete c._editing; }
+      renderTOC(currentOpenParts().concat(part.id));
+    });
+    return wrap;
+  }
+
+  const row = document.createElement('div');
+  row.className = 'chapter-row';
+  const isActive = editingChapter===null && openState && openState.partId===part.id && openState.cIdx===cIdx;
+  if(isActive) row.classList.add('active');
+  row.innerHTML = `
+    <div class="chapter-item">
+      <span class="seal ${c.written?'written':''}"></span>
+      <span class="ct-title">${escapeHTML(c.t)}</span>
+    </div>
+    <div class="chapter-actions">
+      <button class="icon-btn" data-act="up" title="위로">↑</button>
+      <button class="icon-btn" data-act="down" title="아래로">↓</button>
+      <button class="icon-btn" data-act="edit" title="이름 수정">✎</button>
+      <button class="icon-btn danger" data-act="del" title="삭제">×</button>
+    </div>
+  `;
+  row.querySelector('.chapter-item').addEventListener('click', ()=>openChapter(part.id, cIdx));
+  row.querySelector('[data-act="up"]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(cIdx>0){
+      [part.chapters[cIdx-1], part.chapters[cIdx]] = [part.chapters[cIdx], part.chapters[cIdx-1]];
+      saveData();
+      renderTOC(currentOpenParts());
+    }
+  });
+  row.querySelector('[data-act="down"]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(cIdx<part.chapters.length-1){
+      [part.chapters[cIdx+1], part.chapters[cIdx]] = [part.chapters[cIdx], part.chapters[cIdx+1]];
+      saveData();
+      renderTOC(currentOpenParts());
+    }
+  });
+  row.querySelector('[data-act="edit"]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    c._editing = true;
+    renderTOC(currentOpenParts().concat(part.id));
+  });
+  const delBtn = row.querySelector('[data-act="del"]');
+  delBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(delBtn.dataset.armed==='1'){
+      part.chapters.splice(cIdx,1);
+      saveData();
+      renderTOC(currentOpenParts());
+      renderWelcome();
+    } else {
+      delBtn.dataset.armed='1';
+      delBtn.textContent='확실?';
+      setTimeout(()=>{ delBtn.dataset.armed=''; delBtn.textContent='×'; }, 2500);
+    }
+  });
+  return row;
+}
+
+// ---------- Doc view ----------
+let openState = null; // {partId, cIdx}
+
+function openChapter(partId, cIdx){
+  editingChapter = null;
+  buildFlat(currentBook);
+  openState = {partId, cIdx};
+  renderTOC(currentOpenParts().concat(partId));
+  renderDoc();
+}
+
+function renderDoc(){
+  if(!openState){ renderWelcome(); return; }
+  const part = findPart(openState.partId);
+  if(!part){ openState=null; renderWelcome(); return; }
+  const chapter = part.chapters[openState.cIdx];
+  if(!chapter){ openState=null; renderWelcome(); return; }
+
+  buildFlat(currentBook);
+  const idx = flat.findIndex(f=>f.partId===openState.partId && f.ci===openState.cIdx);
+  const doc = document.getElementById('doc');
+
+  if(editingChapter && editingChapter.partId===openState.partId && editingChapter.cIdx===openState.cIdx){
+    doc.innerHTML = `
+      <div class="doc-card">
+        <div class="doc-header">
+          <div class="doc-eyebrow">${escapeHTML(part.id)} · ${escapeHTML(part.title)}</div>
+          <input class="doc-title-input" id="edit-title" value="${escapeHTML(chapter.t)}">
+          <input class="doc-date-input" id="edit-date" placeholder="날짜/시점 (선택)" value="${escapeHTML(chapter.d||'')}">
+        </div>
+        <div class="doc-body">
+          <textarea class="doc-body-editor" id="edit-body" placeholder="여기에 본문을 입력하세요...">${escapeHTML(chapter.content||'')}</textarea>
+        </div>
+        <div class="doc-nav">
+          <div class="doc-nav-side">
+            <button class="save" id="saveContentBtn">저장</button>
+            <button id="cancelContentBtn">취소</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('saveContentBtn').addEventListener('click', async ()=>{
+      chapter.t = document.getElementById('edit-title').value.trim() || chapter.t;
+      const d = document.getElementById('edit-date').value.trim();
+      if(d) chapter.d = d; else delete chapter.d;
+      const bodyVal = document.getElementById('edit-body').value;
+      chapter.content = bodyVal;
+      chapter.written = bodyVal.trim().length>0;
+      editingChapter = null;
+      await saveData();
+      renderTOC(currentOpenParts());
+      renderDoc();
+    });
+    document.getElementById('cancelContentBtn').addEventListener('click', ()=>{
+      editingChapter = null;
+      renderDoc();
+    });
+    return;
+  }
+
+  const isWritten = !!chapter.written && chapter.content;
+  let bodyHTML = '';
+  if(isWritten){
+    bodyHTML = chapter.content.split('\n\n').map(p=>`<p>${escapeHTML(p).replace(/\n/g,'<br>')}</p>`).join('');
+  } else {
+    bodyHTML = `
+      <div class="redacted">
+        <div class="redacted-bar"></div><div class="redacted-bar"></div>
+        <div class="redacted-bar"></div><div class="redacted-bar"></div>
+      </div>
+      <div class="redacted-note">[ 미집필 · 이 화는 아직 본문이 도착하지 않았습니다 ]<br>아래 '편집' 버튼으로 바로 쓰거나, 본문을 채팅으로 전달해 채워달라고 할 수 있어요.</div>`;
+  }
+
+  doc.innerHTML = `
+    <div class="doc-card">
+      <div class="doc-header">
+        <div class="doc-eyebrow">${escapeHTML(part.id)} · ${escapeHTML(part.title)}</div>
+        <div class="doc-title">${escapeHTML(chapter.t)}</div>
+        ${chapter.d ? `<div class="doc-date">${escapeHTML(chapter.d)}</div>` : ''}
+        <div class="stamp-badge ${isWritten?'written':''}">${isWritten?'수록':'미집필'}</div>
+      </div>
+      <div class="doc-body">${bodyHTML}</div>
+      <div class="doc-nav">
+        <button id="prevBtn" ${idx<=0?'disabled':''}>← 이전 화</button>
+        <div class="doc-nav-side">
+          <button class="primary" id="editBtn">✎ 편집</button>
+        </div>
+        <button id="nextBtn" ${idx>=flat.length-1?'disabled':''}>다음 화 →</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('main').scrollTop = 0;
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if(prevBtn) prevBtn.addEventListener('click', ()=>{ const f=flat[idx-1]; if(f) openChapter(f.partId,f.ci); });
+  if(nextBtn) nextBtn.addEventListener('click', ()=>{ const f=flat[idx+1]; if(f) openChapter(f.partId,f.ci); });
+  document.getElementById('editBtn').addEventListener('click', ()=>{
+    editingChapter = {partId:openState.partId, cIdx:openState.cIdx};
+    renderDoc();
+  });
+}
+
+function renderWelcome(){
+  document.getElementById('doc').innerHTML = `
+    <div class="welcome">
+      <div class="mark">황정(黃政) 문서보관소</div>
+      <h2>왼쪽에서 화를 선택하세요</h2>
+      <p>화를 클릭하면 본문을 읽거나 직접 편집할 수 있어요. 파트·화 추가/삭제/순서변경도 왼쪽에서 바로 가능합니다. 변경사항은 자동 저장됩니다.</p>
+    </div>
+  `;
+}
+
+document.querySelectorAll('.book-toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.book-toggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentBook = parseInt(btn.dataset.book);
+    openState = null;
+    editingChapter = null;
+    renderTOC();
+    renderWelcome();
+  });
+});
+
+document.getElementById('add-part-btn').addEventListener('click', ()=>{
+  document.getElementById('add-part-form').classList.add('open');
+  document.getElementById('add-part-btn').style.display='none';
+});
+document.getElementById('cancel-add-part').addEventListener('click', ()=>{
+  document.getElementById('add-part-form').classList.remove('open');
+  document.getElementById('add-part-btn').style.display='block';
+  document.getElementById('new-part-id').value='';
+  document.getElementById('new-part-title').value='';
+});
+document.getElementById('confirm-add-part').addEventListener('click', ()=>{
+  const idInput = document.getElementById('new-part-id');
+  const titleInput = document.getElementById('new-part-title');
+  const bookSel = document.getElementById('new-part-book');
+  let id = idInput.value.trim();
+  const title = titleInput.value.trim();
+  if(!id || !title) return;
+  const book = parseInt(bookSel.value);
+  while(DATA.some(p=>p.id===id && p.book===book)){ id = id + "'"; }
+  DATA.push({book, id, title, chapters:[]});
+  saveData();
+  currentBook = book;
+  document.querySelectorAll('.book-toggle button').forEach(b=>b.classList.toggle('active', parseInt(b.dataset.book)===book));
+  document.getElementById('add-part-form').classList.remove('open');
+  document.getElementById('add-part-btn').style.display='block';
+  idInput.value=''; titleInput.value='';
+  renderTOC(currentOpenParts().concat(id));
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportBackup);
+document.getElementById('importInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importBackup(file);
+  e.target.value = '';
+});
+
+(async function init(){
+  await loadData();
+  renderTOC();
+  renderWelcome();
+})();
+</script>
+</body>
+</html>
